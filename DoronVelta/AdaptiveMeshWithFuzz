@@ -22,7 +22,7 @@ gcode:
     {% set points_y = (((((y_max - y_min) | abs ) / max_probe_point_distance) | round(method='ceil') | int)) %}
     {% set min_points = 3 %}
     {% set points = [points_x, points_y, min_points] | max %} 
-    {% set points += 1 - (points % 2) %}
+    {% set points = (points + 1) - (points % 2) %}
     
     {% set radius_x = ( x_max - center_x | round(method='ceil') | int ) %}
     {% set radius_y = ( y_max - center_y | round(method='ceil') | int ) %}
