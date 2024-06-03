@@ -29,6 +29,6 @@ gcode:
 
     {% set radius = [radius_x, radius_y] | max %}
 
-    { action_respond_info("Adapted probe count: {}.".format((points))) }
+    { action_respond_info("Adapted Mesh: Probe Count: {}, Center XY: {}, {}, Radius: {}".format((points), (adapted_center_x), (adapted_center_y), (radius))) }
     
     _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
