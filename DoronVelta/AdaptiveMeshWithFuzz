@@ -22,10 +22,7 @@ gcode:
     {% set points_y = (((((y_max - y_min) | abs ) / max_probe_point_distance) | round(method='ceil') | int)) %}
     {% set min_points = 3 %}
     {% set points = [points_x, points_y, min_points] | max %} 
-
-    {% if points % 2 == 0 %}
-        {% set points = points + 1 %}
-    {% endif %}
+    {% set points += 1 - (points % 2) %}
     
     {% set radius_x = ( x_max - center_x | round(method='ceil') | int ) %}
     {% set radius_y = ( y_max - center_y | round(method='ceil') | int ) %}
@@ -38,14 +35,6 @@ gcode:
         {% set radius_y = radius_y * -1 %}
     {% endif %}
 
-    {% if radius_x >= radius_y %}
-        {% set radius = radius_x %}
-    {% else %}
-        {% set radius = radius_y %}
-    {% endif %}
+    {% set radius = [radius_x, radius_y] | max %}
     
-    {% if points_x >= points_y %}
-        _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
-    {% else %}
-        _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
-    {% endif %}
+    _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
