@@ -1,4 +1,5 @@
-[gcode_macro ADAPTIVE_MESH]
+[gcode_macro BED_MESH_CALIBRATE]
+rename_existing: _BED_MESH_CALIBRATE
 variable_fuzz_amount: 3                                                                                            # Slightly randomizes mesh points to spread out wear from nozzle-based probes. Leave at 0 to disable.
 gcode:
     {% set all_points = printer.exclude_object.objects | map(attribute='polygon') | sum(start=[]) %}
@@ -42,11 +43,9 @@ gcode:
     {% else %}
         {% set radius = radius_y %}
     {% endif %}
-
-    RESPOND msg="{points}"
     
     {% if points_x >= points_y %}
-        BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
+        _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
     {% else %}
-        BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
+        _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
     {% endif %}
