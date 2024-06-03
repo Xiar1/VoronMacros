@@ -1,5 +1,5 @@
 [gcode_macro ADAPTIVE_MESH]
-variable_fuzz_amount: 3                                                                                      ;Set the amount of fuzz to use for nozzle probe (Recommended max is 3)
+variable_fuzz_amount: 3                                                                                            # Slightly randomizes mesh points to spread out wear from nozzle-based probes. Leave at 0 to disable.
 gcode:
     {% set all_points = printer.exclude_object.objects | map(attribute='polygon') | sum(start=[]) %}
     {% set bed_mesh_radius = printer.configfile.settings.bed_mesh.mesh_radius %}
@@ -17,10 +17,14 @@ gcode:
 
     {% set round_probe_count = printer.configfile.settings.bed_mesh.round_probe_count %}
     {% set max_probe_point_distance = (bed_mesh_radius * 2) / round_probe_count  %}
-    {% set points_x = (((((x_max - x_min) | abs ) / max_probe_point_distance) | round(method='ceil') | int) + 1 ) %}
-    {% set points_y = (((((y_max - y_min) | abs ) / max_probe_point_distance) | round(method='ceil') | int) + 1 ) %}
+    {% set points_x = (((((x_max - x_min) | abs ) / max_probe_point_distance) | round(method='ceil') | int)) %}
+    {% set points_y = (((((y_max - y_min) | abs ) / max_probe_point_distance) | round(method='ceil') | int)) %}
     {% set min_points = 3 %}
     {% set points = [points_x, points_y, min_points] | max %} 
+
+    {% if points % 2 == 0 %}
+        {% set points = points + 1 %}
+    {% endif %}
     
     {% set radius_x = ( x_max - center_x | round(method='ceil') | int ) %}
     {% set radius_y = ( y_max - center_y | round(method='ceil') | int ) %}
@@ -38,6 +42,8 @@ gcode:
     {% else %}
         {% set radius = radius_y %}
     {% endif %}
+
+    RESPOND msg="{points}"
     
     {% if points_x >= points_y %}
         BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
