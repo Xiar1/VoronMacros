@@ -1,7 +1,12 @@
 [gcode_macro BED_MESH_CALIBRATE]
 rename_existing: _BED_MESH_CALIBRATE
-variable_fuzz_amount: 3                                                                                            # Slightly randomizes mesh points to spread out wear from nozzle-based probes. Leave at 0 to disable.
+variable_fuzz_amount: 3 # Slightly randomizes mesh points to spread out wear from nozzle-based probes. Leave at 0 to disable.
 gcode:
+
+    ############################################################################################################
+    #                        Retrive information from printer and exclude objects                              #
+    ############################################################################################################
+    
     {% set all_points = printer.exclude_object.objects | map(attribute='polygon') | sum(start=[]) %}
     {% set bed_mesh_radius = printer.configfile.settings.bed_mesh.mesh_radius %}
     {% set x_min = all_points | map(attribute=0) | min | default(bed_mesh_radius * -1) %}
@@ -9,12 +14,20 @@ gcode:
     {% set x_max = all_points | map(attribute=0) | max | default(bed_mesh_radius) %}
     {% set y_max = all_points | map(attribute=1) | max | default(bed_mesh_radius) %}
 
+    ############################################################################################################
+    #                       Calculate center coordinates and add fuzz amount to the center                     #
+    ############################################################################################################
+    
     {% set center_x = (x_min + x_max) / 2 | float %}
     {% set center_y = (y_min + y_max) / 2 | float %}
 
     {% set fuzz_range = range((0) | int, (fuzz_amount * 100) | int + 1) %}
     {% set adapted_center_x = center_x - (fuzz_range | random / 100.0) %}
     {% set adapted_center_y = center_y - (fuzz_range | random / 100.0) %}
+
+    ############################################################################################################
+    #                          Calculate adapted probe count for round probe count                             #
+    ############################################################################################################
 
     {% set round_probe_count = printer.configfile.settings.bed_mesh.round_probe_count %}
     {% set max_probe_point_distance = (bed_mesh_radius * 2) / round_probe_count  %}
@@ -23,12 +36,19 @@ gcode:
     {% set min_points = 3 %}
     {% set points = [points_x, points_y, min_points] | max %} 
     {% set points = (points + 1) - (points % 2) %}
+
+    ############################################################################################################
+    #                                      Calculate adapted radius                                            #
+    ############################################################################################################
     
     {% set radius_x = ( x_max - center_x | round(method='ceil') | float ) %}
     {% set radius_y = ( y_max - center_y | round(method='ceil') | float ) %}
-
     {% set radius = [radius_x, radius_y] | max %}
 
+    ############################################################################################################
+    #                                            Send the bed mesh                                             #
+    ############################################################################################################
+    
     { action_respond_info("Adapted Mesh: Probe Count: {}, Center XY: {}, {}, Radius: {}".format((points), (adapted_center_x), (adapted_center_y), (radius))) }
     
     _BED_MESH_CALIBRATE PROFILE="default" MESH_ORIGIN={adapted_center_x},{adapted_center_y} MESH_RADIUS={radius} ROUND_PROBE_COUNT={points}
